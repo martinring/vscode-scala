@@ -5,25 +5,28 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl._
 import io.circe.Json
 import net.flatmap.jsonrpc._
-import net.flatmap.vscode.languageserver.LanguageServer.{CodeLens, CompletionItem, TextDocument, Workspace}
 import net.flatmap.vscode.languageserver._
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
-class Server(client: Future[LanguageClient])(implicit ec: ExecutionContext) extends LanguageServer {
+class Server(client: LanguageClient)(implicit ec: ExecutionContext) extends LanguageServer {
+	client.window.logMessage(MessageType.Info, "vscode-languageserver-scala-example started")
+
 	def initialize(processId: Option[Int],
 	               rootPath: Option[String],
 	               initializationOptions: Option[Json],
-	               capabilities: ClientCapabilities): Future[InitializeResult] = client.map { client =>
+	               capabilities: ClientCapabilities): Future[InitializeResult] = Future {
 		client.window.showMessage(MessageType.Info,"Hello from Scala Server!")
 		InitializeResult(ServerCapabilities())
 	}
-	def shutdown(): Future[Unit] = ???
-	def exit(): Unit = ???
-	def textDocument: TextDocument = ???
-	def completionItem: CompletionItem = ???
-	def workspace: Workspace = ???
-	def codeLens: CodeLens = ???
+
+	var shutdownDone = false
+	def shutdown(): Future[Unit] = Future.successful { shutdownDone = true }
+	def exit(): Unit = sys.exit(if (shutdownDone) 0 else -1)
+	def textDocument: LanguageServer.TextDocumentOperations = ???
+	def completionItem: LanguageServer.CompletionItemOperations = ???
+	def workspace: LanguageServer.WorkspaceOperations = ???
+	def codeLens: LanguageServer.CodeLensOperations = ???
 }
 
 object Server extends App {
@@ -31,10 +34,18 @@ object Server extends App {
 	implicit val materializer = ActorMaterializer()
 	implicit val dispatcher = system.dispatcher
 
-	val client = Promise[LanguageClient]
-	val remote = Remote[LanguageClient](Id.standard)
-	val server = Local[LanguageServer](new Server(client.future))
-	println("hallo")
+	import net.flatmap.vscode.languageserver.Codec._
+
+	val client = Remote[LanguageClient](Id.standard)
+	val server = Local[LanguageServer]
+
+	val connection = Connection.bidi(server,client,
+		(client: LanguageClient with RemoteConnection) => new Server(client))
+
+	val in = StreamConverters.fromInputStream(() => System.in)
+	val out = StreamConverters.fromOutputStream(() => System.out)
+
+	val socket = in.viaMat(connection)(Keep.right).to(out).run()
 }
 
 
