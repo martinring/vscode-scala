@@ -4,7 +4,7 @@ version := "0.0.1"
 organization := "net.flatmap"
 licenses += "MIT" -> url("https://opensource.org/licenses/MIT")
 resolvers += Resolver.bintrayRepo("flatmap", "maven")
-libraryDependencies += "net.flatmap" %% "vscode-languageserver" % "0.3.3"
+libraryDependencies += "net.flatmap" %% "vscode-languageserver" % "0.4.7"
 scalaVersion := "2.11.8"
 
 stagingDirectory in Universal := baseDirectory.value / ".." / "client" / "server"

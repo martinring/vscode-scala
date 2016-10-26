@@ -1,5 +1,7 @@
 package net.flatmap.vscode
 
+import java.net.URI
+
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl._
@@ -7,26 +9,146 @@ import io.circe.Json
 import net.flatmap.jsonrpc._
 import net.flatmap.vscode.languageserver._
 
+import scala.collection.GenTraversable
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
-class Server(client: LanguageClient)(implicit ec: ExecutionContext) extends LanguageServer {
-	client.window.logMessage(MessageType.Info, "vscode-languageserver-scala-example started")
+class Server(client: LanguageClient)(implicit ec: ExecutionContext) extends LanguageServer with CompletionProvider {
+	override def textDocumentSyncKind: TextDocumentSyncKind =
+		TextDocumentSyncKind.None
 
 	def initialize(processId: Option[Int],
 	               rootPath: Option[String],
 	               initializationOptions: Option[Json],
-	               capabilities: ClientCapabilities): Future[InitializeResult] = Future {
-		client.window.showMessage(MessageType.Info,"Hello from Scala Server!")
-		InitializeResult(ServerCapabilities())
+	               capabilities: ClientCapabilities): Future[InitializeResult] =
+		Future.successful(InitializeResult(this.capabilities))
+
+	def shutdown(): Future[Unit] = Future.successful()
+	def exit(): Unit = sys.exit()
+
+	val textDocuments = collection.mutable.Map.empty[URI,TextDocumentItem]
+
+	def validateTextDocument(textDocument: TextDocumentItem): Unit = {
+		val diags = textDocument.text.lines.toSeq.zipWithIndex.flatMap { case (line,n) =>
+			val index = line.indexOf("typescript")
+			if (index >= 0) Seq[Diagnostic](
+				Diagnostic(
+					range = Range(n,index,n,index + 10),
+					severity = Some(DiagnosticSeverity.Warning),
+					code = None,
+					message = s"${line.substring(index,10)} should be spelled TypeScript",
+					source = Some("ex")
+				)
+			)
+		  else Seq.empty[Diagnostic]
+		}
+		client.textDocument.publishDiagnostics(textDocument.uri, diags)
 	}
 
-	var shutdownDone = false
-	def shutdown(): Future[Unit] = Future.successful { shutdownDone = true }
-	def exit(): Unit = sys.exit(if (shutdownDone) 0 else -1)
-	def textDocument: LanguageServer.TextDocumentOperations = ???
-	def completionItem: LanguageServer.CompletionItemOperations = ???
-	def workspace: LanguageServer.WorkspaceOperations = ???
-	def codeLens: LanguageServer.CodeLensOperations = ???
+	def didOpen(textDocument: TextDocumentItem): Unit = {
+		textDocuments += textDocument.uri -> textDocument
+		validateTextDocument(textDocument)
+	}
+
+	def didChange(textDocument: VersionedTextDocumentIdentifier, contentChanges: Seq[TextDocumentContentChangeEvent]): Unit = {
+		for {
+			old  <- textDocuments.get(textDocument.uri)
+			last <- contentChanges.lastOption
+		} {
+			textDocuments(textDocument.uri) = old.copy(
+				text = last.text,
+				version = textDocument.version
+			)
+			client.window.logMessage(MessageType.Info,s"document changed: ${textDocument.uri}@${textDocument.version}\n${last.text}")
+			validateTextDocument(textDocuments(textDocument.uri))
+		}
+	}
+
+	def didClose(textDocument: TextDocumentIdentifier): Unit = {
+		textDocuments -= textDocument.uri
+	}
+
+	def didSave(textDocument: TextDocumentIdentifier): Unit = {
+		client.window.logMessage(MessageType.Log, s"${textDocument.uri} got saved")
+	}
+
+	def didChangeWatchedFiles(changes: Seq[FileEvent]): Unit = {
+		// Monitored files have changed in VSCode
+		client.window.logMessage(MessageType.Log, "We received a file change event")
+	}
+
+	override def completionOptions: CompletionOptions =
+		CompletionOptions(resolveProvider = Some(true))
+
+	def completion(textDocument: TextDocumentIdentifier,
+	               position: Position): Future[CompletionList] = Future.successful {
+		CompletionList(Seq(
+			CompletionItem(
+				label = "TypeScript",
+				kind = Some(CompletionItemKind.Text),
+				data = Some(Json.fromInt(1))
+			),
+			CompletionItem(
+				label = "JavaScript",
+				kind = Some(CompletionItemKind.Text),
+				data = Some(Json.fromInt(2))
+			)
+		))
+	}
+
+	// TODO: this is ugly and cumbersome... should be addressed in scala-jsonrpc
+	def resolveCompletionItem(label: String,
+	                          kind: Option[CompletionItemKind],
+	                          detail: Option[String],
+	                          documentation: Option[String],
+	                          sortText: Option[String],
+	                          filterText: Option[String],
+	                          insertText: Option[String],
+	                          textEdit: Option[TextEdit],
+	                          additionalTextEdits: Option[Seq[TextEdit]],
+	                          command: Option[Command],
+	                          data: Option[Json]): Future[CompletionItem] = Future.successful {
+		if (data == Some(Json.fromInt(1)))
+			CompletionItem(
+				label = label,
+				kind = kind,
+				detail = Some("TypeScript details"),
+				documentation = Some("TypeScript documentation"),
+				sortText = sortText,
+				filterText = filterText,
+				insertText = insertText,
+				textEdit = textEdit,
+				additionalTextEdits = additionalTextEdits,
+				command = command,
+				data = data
+			)
+		else if (data == Some(Json.fromInt(2)))
+			CompletionItem(
+				label = label,
+				kind = kind,
+				detail = Some("TypeScript details"),
+				documentation = Some("TypeScript documentation"),
+				sortText = sortText,
+				filterText = filterText,
+				insertText = insertText,
+				textEdit = textEdit,
+				additionalTextEdits = additionalTextEdits,
+				command = command,
+				data = data
+			)
+		else CompletionItem(
+			label = label,
+			kind = kind,
+			detail = detail,
+			documentation = documentation,
+			sortText = sortText,
+			filterText = filterText,
+			insertText = insertText,
+			textEdit = textEdit,
+			additionalTextEdits = additionalTextEdits,
+			command = command,
+			data = data
+		)
+	}
 }
 
 object Server extends App {
@@ -36,11 +158,12 @@ object Server extends App {
 
 	import net.flatmap.vscode.languageserver.Codec._
 
-	val client = Remote[LanguageClient](Id.standard)
-	val server = Local[LanguageServer]
+	type Type = LanguageServer with CompletionProvider
 
-	val connection = Connection.bidi(server,client,
-		(client: LanguageClient with RemoteConnection) => new Server(client))
+	val client = Remote[LanguageClient](Id.standard)
+	val server = Local[Type]
+
+	val connection = Connection.bidi(server,client,(client: LanguageClient) => new Server(client))
 
 	val in = StreamConverters.fromInputStream(() => System.in)
 	val out = StreamConverters.fromOutputStream(() => System.out)
