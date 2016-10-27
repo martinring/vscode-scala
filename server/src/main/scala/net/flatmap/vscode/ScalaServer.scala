@@ -1,11 +1,15 @@
 package net.flatmap.vscode
 
 import akka.stream.Materializer
+import akka.util.ByteString
 import io.circe.Json
 import net.flatmap.vscode.languageserver._
+import org.ensime.api.{EnsimeConfig, RpcRequestEnvelope, RpcResponseEnvelope}
+import org.ensime.core.Protocol
+
 import scala.concurrent._
 
-class ExampleServer(client: LanguageClient)(implicit ec: ExecutionContext, mat: Materializer) extends
+class ScalaServer(client: LanguageClient)(implicit ec: ExecutionContext, mat: Materializer) extends
   LanguageServer
   with ServerCapabilities.CompletionProvider
   with TextDocuments
@@ -20,10 +24,6 @@ class ExampleServer(client: LanguageClient)(implicit ec: ExecutionContext, mat: 
     textDocuments.runForeach {
       case (uri,src) =>
         src.runForeach(validateTextDocument)
-    }
-    configChanges.runForeach {
-      case Config(Some(ExampleConfig(Some(maxNumberOfProblems)))) =>
-        this.maxNumberOfProblems = maxNumberOfProblems
     }
     Future.successful(InitializeResult(this.capabilities))
   }

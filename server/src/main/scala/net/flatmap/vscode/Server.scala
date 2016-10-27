@@ -22,7 +22,7 @@ object Server extends App {
 	val client = Remote[LanguageClient](Id.standard)
 	val server = Local[Type]
 
-	val connection = Connection.bidi(server,client,(client: LanguageClient) => new ExampleServer(client))
+	val connection = Connection.bidi(server,client,(client: LanguageClient) => new ScalaServer(client))
 
 	val in = StreamConverters.fromInputStream(() => System.in)
 	val out = StreamConverters.fromOutputStream(() => System.out)
