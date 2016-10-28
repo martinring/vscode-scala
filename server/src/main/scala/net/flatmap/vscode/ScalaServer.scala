@@ -1,15 +1,24 @@
 package net.flatmap.vscode
 
-import akka.stream.Materializer
-import akka.util.ByteString
+import java.io.File
+
+import akka.actor.ActorSystem
+import akka.stream.{Materializer, OverflowStrategy}
+import akka.stream.scaladsl.{Sink, Source}
+import com.google.common.base.Charsets
+import com.google.common.io.Files
+import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMessages
 import io.circe.Json
+import net.flatmap.jsonrpc.{ErrorCodes, ResponseError}
 import net.flatmap.vscode.languageserver._
-import org.ensime.api.{EnsimeConfig, RpcRequestEnvelope, RpcResponseEnvelope}
-import org.ensime.core.Protocol
+import org.ensime.api.{TextEdit => _, _}
+import org.ensime.config.EnsimeConfigProtocol
+import org.ensime.core.{Broadcaster, Project}
 
 import scala.concurrent._
+import scala.util.Try
 
-class ScalaServer(client: LanguageClient)(implicit ec: ExecutionContext, mat: Materializer) extends
+class ScalaServer(client: LanguageClient)(implicit ec: ExecutionContext, mat: Materializer, system: ActorSystem) extends
   LanguageServer
   with ServerCapabilities.CompletionProvider
   with TextDocuments
@@ -20,10 +29,35 @@ class ScalaServer(client: LanguageClient)(implicit ec: ExecutionContext, mat: Ma
   def initialize(processId: Option[Int],
                  rootPath: Option[String],
                  initializationOptions: Option[Json],
-                 capabilities: ClientCapabilities): Future[InitializeResult] = {
-    textDocuments.runForeach {
-      case (uri,src) =>
-        src.runForeach(validateTextDocument)
+                 capabilities: ClientCapabilities,
+                 trace: Option[Trace]): Future[InitializeResult] = {
+    val res = Try {
+      EnsimeConfigProtocol.parse(Files.toString(new File(rootPath.getOrElse(".") + "/.ensime"), Charsets.UTF_8))
+    }.map { implicit config =>
+      val broadcaster = system.actorOf(Broadcaster(), "broadcaster")
+      broadcaster ! Broadcaster.Register
+      val msgs = Source.actorRef[EnsimeServerMessage](1024,OverflowStrategy.fail)
+      val handler = Sink.foreach[EnsimeServerMessage] {
+        case msg => client.window.logMessage(MessageType.Log, msg.toString)
+      }
+      val ref = msgs.to(handler).run()
+      broadcaster.tell(Broadcaster.Register,ref)
+      val project = system.actorOf(Project(broadcaster), "project")
+      project.tell(ConnectionInfoReq,ref)
+      textDocuments.runForeach {
+        case (uri,src) =>
+          src.runForeach(validateTextDocument)
+      }
+      client.window.logMessage(MessageType.Log, "initialized ensime")
+    }
+    res.recover {
+      case t =>
+        client.window.showMessage(MessageType.Error,t.getMessage)
+        ResponseError(
+          ErrorCodes.serverErrorStart,
+          t.getMessage,
+          Some(Codec.encodeInitializeError(InitializeError(retry = false)))
+        )
     }
     Future.successful(InitializeResult(this.capabilities))
   }
@@ -86,4 +120,13 @@ class ScalaServer(client: LanguageClient)(implicit ec: ExecutionContext, mat: Ma
         documentation = Some("TypeScript documentation"))
     else item
   }
+
+  @net.flatmap.jsonrpc.JsonRPC.Named("$/setTraceNotification")
+  def setTrace(trace: Trace): Unit = ()
+
+  @net.flatmap.jsonrpc.JsonRPC.Named("textDocument/willSave")
+  def willSaveDocument(textDocument: TextDocumentIdentifier, reason: TextDocumentSaveReason): Unit = ()
+
+  @net.flatmap.jsonrpc.JsonRPC.Named("textDocument/willSaveWaitUntil")
+  def willSaveDocumentWaitUntil(textDocument: TextDocumentIdentifier, reason: TextDocumentSaveReason): Future[Seq[TextEdit]] = Future.successful(Seq.empty)
 }

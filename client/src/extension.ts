@@ -10,11 +10,8 @@ import { workspace, Disposable, ExtensionContext } from 'vscode';
 import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, TransportKind, Executable } from 'vscode-languageclient';
 
 export function activate(context: ExtensionContext) {
-
 	// The server is implemented in scala
-	let serverBin = context.asAbsolutePath(path.join('server', 'bin', 'language-server-example'));
-	// The debug options for the server
-	let debugOptions = { execArgv: ["--nolazy", "--debug=6004"] };
+	let serverBin = context.asAbsolutePath(path.join('server', 'bin', 'vscode-scala'));
 
 	// If the extension is launched in debug mode then the debug server options are used
 	// Otherwise the run options are used

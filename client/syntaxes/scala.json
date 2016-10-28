@@ -1,0 +1,206 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Scala",
+	"scopeName": "source.scala",
+	"fileTypes": [ ".scala", ".sbt" ],
+	"uuid": "88fbd52b-08e9-4aab-b5cd-c16428a92573",
+	"foldingStartMarker": "{",
+	"foldingStopMarker": "}",
+	"patterns": [
+		{ "include": "#decls" },
+		{ "include": "#keywords" },
+		{ "include": "#literals" },
+		{ "include": "#comments" }
+	],
+	"repository": {
+		"identifier": {
+			"patterns": [
+				{
+					"match": "[\\p{Ll}\\p{Lu}\\p{Lt}\\p{Lo}\\p{Nl}\\$_][\\p{Ll}\\p{Lu}\\p{Lt}\\p{Lo}\\p{Nl}\\$_0-9]*(_[\\p{Sm}\\p{So}\\!\\#\\$\\%\\*\\+\\-\\:\\<\\=\\>\\?\\@\\^\\_\\~]+)?",
+					"name": "markup.bold"
+				}
+			]
+		},
+		"type": {
+			"patterns": [
+								{
+					"match": "(?<=[\\[\\,])\\s*[A-Za-z]*",
+					"name":  "entity.name.type.parameter"
+				},
+				{ "include": "#typeparams" },
+				{ "include": "#tupletype" }
+
+			]
+		},
+		"tupletype": {
+			"patterns": [
+				{
+					"begin": "\\(",
+					"end": "\\)",
+					"patterns": [
+						{ "include": "#type" }
+					]
+				}
+			]
+		},
+		"typeparams": {
+			"patterns": [
+				{
+					"begin": "\\[",
+					"end": "\\]",
+					"patterns": [
+						{ "include": "#type" }
+					]
+				}
+			]
+		},
+		"decls": {
+			"patterns": [
+				{
+					"begin": "\\b(trait|(case\\s+)?object|(case\\s+)?class|extends|with)\\s+",
+					"end": "(?=(extends|with)|\\{|$|\\[|\\()",
+					"captures": {
+						"1": { "name": "keyword.scala" }
+					},
+					"patterns": [
+						{ "include": "#type" }
+					]
+				},
+				{
+					"begin": "(?<=[^_]):(?=[\\p{L}\\s\\(])",
+					"end": "(?=[=\\)])",
+					"captures": {
+						"1": { "name": "keyword.scala" }
+					},
+					"patterns": [
+						{ "include": "#type" }
+					]
+				},
+				{
+					"begin": "\\b(def)\\s+",
+					"end": "(?:\\(|\\=|$|\\:)",
+					"captures": {
+						"1": { "name": "keyword.scala" }
+					},
+					"contentName": "entity.name.method.scala"
+				},
+				{
+					"begin": "\\b(var)\\s+",
+					"end": "(?:\\(|\\=|$|\\:)",
+					"captures": {
+						"1": { "name": "keyword.scala" }
+					},
+					"contentName": "variable.name.scala"
+				},
+				{
+					"begin": "\\b(val)\\s+",
+					"end": "(?:\\(|\\=|$|\\:)",
+					"captures": {
+						"1": { "name": "keyword.scala" }
+					},
+					"contentName": "constant.name.scala"
+				}
+			]
+		},
+		"unicodeEscapes": {
+			"patterns": [
+				{
+					"match": "\\\\u[0-9a-fA-F]{4}",
+					"name": "markup.bold"
+				}
+			]
+		},
+		"lineComment": {
+			"patterns": [
+				{
+					"match": "//.*$",
+					"name": "comment.line.double-slash.scala"
+				}
+			]
+		},
+		"comments": {
+			"patterns": [
+				{ "include": "#docComment" },
+				{ "include": "#blockComment" },
+				{ "include": "#lineComment" }
+			]
+		},
+		"docComments": {
+			"patterns": [
+				{
+					"begin": "/\\*\\*",
+					"end": "\\*/",
+					"name": "comment.block.documentation.scala",
+					"patterns": [
+						{ "include": "#docCommentTags" },
+						{ "include": "#blockComment" }
+					]
+				}
+			]
+		},
+		"docCommentTags": {
+			"patterns": [
+				{
+					"match": "param",
+					"name": "keyword.other"
+				}
+			]
+		},
+		"blockComment": {
+		  "patterns": [
+				{
+					"begin": "/\\*",
+					"end": "\\*/",
+					"name": "comment.block.scala",
+					"patterns": [
+						{ "include": "#blockComment" }
+					]
+				}
+			]
+		},
+		"keywords": {
+			"patterns": [
+				{
+					"match": "\\b(abstract|case\\s+class|class|def|extends|final|forSome|implicit|import|lazy|case\\s+object|object|override|package|private|protected|sealed|super|this|trait|type|val|var|with)\\b",
+					"name": "keyword.scala"
+				},
+				{
+					"match": "\\b(case(?!\\s+(class|object))|catch|do|else|finally|for|id|new|return|throw|try|while|yield|macro|match)\\b",
+					"name": "keyword.control.scala"
+				},
+				{
+					"match": "\\b(false,null,true)\\b",
+					"name": "keyword.other.scala"
+				},
+				{
+					"match": "\\b(\\_|:|=|=>|<-|<:|<%|>:|#|@)\\b",
+					"name": "keyword.operator"
+				}
+			]
+		},
+		"literals": {
+			"patterns": [
+				{
+					"begin": "\"",
+					"end": "((?<!\\\\)\"|$)",
+					"name": "string.quoted.double.scala",
+					"patterns": [
+
+					]
+				},
+				{
+					"begin": "\"\"\"",
+					"end": "\"\"\"",
+					"name": "string.quoted.triple.scala"
+				},
+				{
+					"begin": "(?<=[ \\(\\{])<(?=[\\?\\:_A-Za-z])",
+					"end": ">",
+					"patterns": [
+						{ "include": "source.xml" }
+					]
+				}
+			]
+		}
+	}
+}
