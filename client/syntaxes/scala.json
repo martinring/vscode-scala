@@ -1,206 +1,385 @@
 {
-	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-	"name": "Scala",
-	"scopeName": "source.scala",
-	"fileTypes": [ ".scala", ".sbt" ],
-	"uuid": "88fbd52b-08e9-4aab-b5cd-c16428a92573",
-	"foldingStartMarker": "{",
-	"foldingStopMarker": "}",
-	"patterns": [
-		{ "include": "#decls" },
-		{ "include": "#keywords" },
-		{ "include": "#literals" },
-		{ "include": "#comments" }
-	],
-	"repository": {
-		"identifier": {
-			"patterns": [
-				{
-					"match": "[\\p{Ll}\\p{Lu}\\p{Lt}\\p{Lo}\\p{Nl}\\$_][\\p{Ll}\\p{Lu}\\p{Lt}\\p{Lo}\\p{Nl}\\$_0-9]*(_[\\p{Sm}\\p{So}\\!\\#\\$\\%\\*\\+\\-\\:\\<\\=\\>\\?\\@\\^\\_\\~]+)?",
-					"name": "markup.bold"
-				}
-			]
-		},
-		"type": {
-			"patterns": [
-								{
-					"match": "(?<=[\\[\\,])\\s*[A-Za-z]*",
-					"name":  "entity.name.type.parameter"
-				},
-				{ "include": "#typeparams" },
-				{ "include": "#tupletype" }
-
-			]
-		},
-		"tupletype": {
-			"patterns": [
-				{
-					"begin": "\\(",
-					"end": "\\)",
-					"patterns": [
-						{ "include": "#type" }
-					]
-				}
-			]
-		},
-		"typeparams": {
-			"patterns": [
-				{
-					"begin": "\\[",
-					"end": "\\]",
-					"patterns": [
-						{ "include": "#type" }
-					]
-				}
-			]
-		},
-		"decls": {
-			"patterns": [
-				{
-					"begin": "\\b(trait|(case\\s+)?object|(case\\s+)?class|extends|with)\\s+",
-					"end": "(?=(extends|with)|\\{|$|\\[|\\()",
-					"captures": {
-						"1": { "name": "keyword.scala" }
-					},
-					"patterns": [
-						{ "include": "#type" }
-					]
-				},
-				{
-					"begin": "(?<=[^_]):(?=[\\p{L}\\s\\(])",
-					"end": "(?=[=\\)])",
-					"captures": {
-						"1": { "name": "keyword.scala" }
-					},
-					"patterns": [
-						{ "include": "#type" }
-					]
-				},
-				{
-					"begin": "\\b(def)\\s+",
-					"end": "(?:\\(|\\=|$|\\:)",
-					"captures": {
-						"1": { "name": "keyword.scala" }
-					},
-					"contentName": "entity.name.method.scala"
-				},
-				{
-					"begin": "\\b(var)\\s+",
-					"end": "(?:\\(|\\=|$|\\:)",
-					"captures": {
-						"1": { "name": "keyword.scala" }
-					},
-					"contentName": "variable.name.scala"
-				},
-				{
-					"begin": "\\b(val)\\s+",
-					"end": "(?:\\(|\\=|$|\\:)",
-					"captures": {
-						"1": { "name": "keyword.scala" }
-					},
-					"contentName": "constant.name.scala"
-				}
-			]
-		},
-		"unicodeEscapes": {
-			"patterns": [
-				{
-					"match": "\\\\u[0-9a-fA-F]{4}",
-					"name": "markup.bold"
-				}
-			]
-		},
-		"lineComment": {
-			"patterns": [
-				{
-					"match": "//.*$",
-					"name": "comment.line.double-slash.scala"
-				}
-			]
-		},
-		"comments": {
-			"patterns": [
-				{ "include": "#docComment" },
-				{ "include": "#blockComment" },
-				{ "include": "#lineComment" }
-			]
-		},
-		"docComments": {
-			"patterns": [
-				{
-					"begin": "/\\*\\*",
-					"end": "\\*/",
-					"name": "comment.block.documentation.scala",
-					"patterns": [
-						{ "include": "#docCommentTags" },
-						{ "include": "#blockComment" }
-					]
-				}
-			]
-		},
-		"docCommentTags": {
-			"patterns": [
-				{
-					"match": "param",
-					"name": "keyword.other"
-				}
-			]
-		},
-		"blockComment": {
-		  "patterns": [
-				{
-					"begin": "/\\*",
-					"end": "\\*/",
-					"name": "comment.block.scala",
-					"patterns": [
-						{ "include": "#blockComment" }
-					]
-				}
-			]
-		},
-		"keywords": {
-			"patterns": [
-				{
-					"match": "\\b(abstract|case\\s+class|class|def|extends|final|forSome|implicit|import|lazy|case\\s+object|object|override|package|private|protected|sealed|super|this|trait|type|val|var|with)\\b",
-					"name": "keyword.scala"
-				},
-				{
-					"match": "\\b(case(?!\\s+(class|object))|catch|do|else|finally|for|id|new|return|throw|try|while|yield|macro|match)\\b",
-					"name": "keyword.control.scala"
-				},
-				{
-					"match": "\\b(false,null,true)\\b",
-					"name": "keyword.other.scala"
-				},
-				{
-					"match": "\\b(\\_|:|=|=>|<-|<:|<%|>:|#|@)\\b",
-					"name": "keyword.operator"
-				}
-			]
-		},
-		"literals": {
-			"patterns": [
-				{
-					"begin": "\"",
-					"end": "((?<!\\\\)\"|$)",
-					"name": "string.quoted.double.scala",
-					"patterns": [
-
-					]
-				},
-				{
-					"begin": "\"\"\"",
-					"end": "\"\"\"",
-					"name": "string.quoted.triple.scala"
-				},
-				{
-					"begin": "(?<=[ \\(\\{])<(?=[\\?\\:_A-Za-z])",
-					"end": ">",
-					"patterns": [
-						{ "include": "source.xml" }
-					]
-				}
-			]
-		}
-	}
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Scala",
+  "scopeName": "source.scala",
+  "fileTypes": [".scala", ".sbt"],
+  "uuid": "3d4baa4c-1cdb-41b4-80a9-50bc27673d8e",
+  "patterns": [
+    { "include": "#code" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "begin": "\\/\\*\\*",
+          "end": "\\*\\/",
+          "name": "comment.block.documentation.scala",
+          "patterns": [
+            { "include": "#scaladoc" }
+          ]
+        },
+        {
+          "begin": "\\/\\*(?!\\*)",
+          "end": "\\*\\/",
+          "name": "comment.block.scala"
+        },
+        {
+          "match": "//.*",
+          "name": "comment.line.double-dash.scala"
+        }
+      ]
+    },
+    "typeExpr": {
+      "patterns": [
+        {
+          "include": "#keywords"
+        },
+        {
+          "match": "\\p{L}[\\p{L}0-9_]*((?<=_)[[\\p{Sm}\\p{So}[:print:]]&&[^\\s\\w\\)\\(\\]\\[{}`'\"\\.;,]]+)?(?!\\.)\\b",
+          "name": "entity.name.type.scala"
+        },
+        { "include": "#code" }
+      ]
+    },
+    "parameters": {
+      "patterns": [
+        {
+          "begin": "(\\p{L}[\\p{L}0-9_]*((?<=_)[[\\p{Sm}\\p{So}[:print:]]&&[^\\s\\w\\)\\(\\]\\[{}`'\"\\.;,]]+)?)\\s*:",
+          "end": "(?=[,\\)])",
+          "beginCaptures": {
+            "1": { "name": "variable.parameter.scala" }
+          },
+          "patterns": [
+            { "include": "#typeExpr" }
+          ]
+        },
+        { "include": "#code" }
+      ]
+    },
+    "declarations": {
+      "patterns": [
+        {
+          "begin": "\\b(case\\s+class|class)\\s+(\\p{L}[\\p{L}0-9_]*((?<=_)[[\\p{Sm}\\p{So}[:print:]]&&[^\\s\\w\\)\\(\\]\\[{}`'\"\\.;,]]+)?)\\s*\\(",
+          "end": "\\)",
+          "captures": {
+            "1": { "name": "keyword.scala" },
+            "2": { "name": "entity.name.type.scala" }
+          },
+          "patterns": [
+            { "include": "#parameters" }
+          ]
+        },
+        {
+          "begin": "\\b(def)\\s+(\\p{L}[\\p{L}0-9_]*((?<=_)[[\\p{Sm}\\p{So}[:print:]]&&[^\\s\\w\\)\\(\\]\\[{}`'\"\\.;,]]+)?)\\s*\\(",
+          "end": "\\)",
+          "captures": {
+            "1": { "name": "keyword.scala" },
+            "2": { "name": "entity.name.function.scala" }
+          },
+          "patterns": [
+            { "include": "#parameters" }
+          ]
+        },
+        {
+          "match": "\\b(def)\\s+(\\p{L}[\\p{L}0-9_]*((?<=_)[[\\p{Sm}\\p{So}[:print:]]&&[^\\s\\w\\)\\(\\]\\[{}`'\"\\.;,]]+)?)",
+          "captures": {
+            "1": { "name": "keyword.scala" },
+            "2": { "name": "entity.name.function.scala" }
+          }
+        },
+        {
+          "match": "\\b(var|val)\\s+(\\p{L}[\\p{L}0-9_]*((?<=_)[[\\p{Sm}\\p{So}[:print:]]&&[^\\s\\w\\)\\(\\]\\[{}`'\"\\.;,]]+)?)",
+          "captures": {
+            "1": { "name": "keyword.scala" },
+            "2": { "name": "entity.name.storage.variable.scala" }
+          }
+        },
+        {
+          "match": "\\b(type)\\s+(\\p{L}[\\p{L}0-9_]*((?<=_)[[\\p{Sm}\\p{So}[:print:]]&&[^\\s\\w\\)\\(\\]\\[{}`'\"\\.;,]]+)?)",
+          "captures": {
+            "1": { "name": "keyword.scala" },
+            "2": { "name": "entity.name.storage.type" }
+          }
+        }
+      ]
+    },
+    "literals": {
+      "patterns": [
+        {
+          "match": "([0-9]+\\.[0-9]+([eE][\\+\\-]?[0-9]+)?[FfDd]?|\\.[0-9]+([eE][\\+\\-]?[0-9]+)?[FfDd]?|[0-9]+([eE][\\+\\-]?[0-9]+)[FfDd]?|[0-9]+([eE][\\+\\-]?[0-9]+)?[FfDd])",
+          "name": "constant.numeric.floating.scala"
+        },
+        {
+          "match": "-?(0|[1-9][0-9]*|0[xX][0-9a-fA-F]+)[Ll]?",
+          "name": "constant.numeric.integral.scala"
+        },
+        {
+          "match": "\\b(true|false|null|this|super)\\b",
+          "name": "constant.language.scala"
+        },
+        {
+          "match": "'(.|\\\\([btnfr\"'\\\\]|[0-7]{1,3}|u{1,2}[0-9a-fA-F]{4}))'",
+          "name": "constant.character.scala"
+        },
+        {
+          "begin": "(\\p{L}[\\p{L}0-9_]*)(\"{3})",
+          "end": "(?<!\\\\)\"{3}",
+          "beginCaptures": {
+            "1": { "name": "entity.name.selector.scala" },
+            "2": { "name": "string.quoted.triple.scala" }
+          },
+          "endCaptures": {
+            "0": { "name": "string.quoted.triple.scala" }
+          },
+          "patterns": [
+            {
+              "match": "[^\\$\"\\\\]+",
+              "name": "string.quoted.triple.interpolated.scala"
+            },
+            {
+              "match": "(\\$)(\\p{L}[\\p{L}0-9_]*)",
+              "captures": {
+                "1": { "name": "string.quoted.triple.scala" },
+                "2": { "name": "entity.name.scala" }
+              }
+            },
+            {
+              "begin": "(\\$)(\\{)",
+              "end": "\\}",
+              "beginCaptures": {
+                "1": { "name": "string.quoted.triple.scala" },
+                "2": { "name": "delimiter.brackets.scala" }
+              },
+              "endCaptures": {
+                "0": { "name": "delimiter.brackets.scala" }
+              },
+              "patterns": [
+                { "include": "#code" }
+              ]
+            }
+          ]
+        },
+        {
+          "begin": "(\\p{L}[\\p{L}0-9_]*)(\")",
+          "end": "(?<!\\\\)\"",
+          "beginCaptures": {
+            "1": { "name": "entity.name.selector.scala" },
+            "2": { "name": "string.quoted.double.scala" }
+          },
+          "endCaptures": {
+            "0": { "name": "string.quoted.double.scala" }
+          },
+          "patterns": [
+            {
+              "match": "[^\\$\"\\\\]+",
+              "name": "string.quoted.double.interpolated.scala"
+            },
+            {
+              "match": "(\\$)(\\p{L}[\\p{L}0-9_]*)",
+              "captures": {
+                "1": { "name": "string.quoted.double.scala" },
+                "2": { "name": "entity.name.scala" }
+              }
+            },
+            {
+              "begin": "(\\$)(\\{)",
+              "end": "\\}",
+              "beginCaptures": {
+                "1": { "name": "string.quoted.double.scala" },
+                "2": { "name": "delimiter.brackets.scala" }
+              },
+              "endCaptures": {
+                "0": { "name": "delimiter.brackets.scala" }
+              },
+              "patterns": [
+                { "include": "#code" }
+              ]
+            }
+          ]
+        },
+        {
+          "begin": "\\p{Ll}[\\p{L}0-9_]*\"",
+          "end": "(?<!\\\\)\"",
+          "name": "string.quoted.double.scala.interpolated"
+        },
+        {
+          "begin": "\"\"\"",
+          "end": "(?<!\\\\)\"\"\"",
+          "name": "string.quoted.triple.multiline.scala"
+        },
+        {
+          "begin": "\"",
+          "end": "(?<!\\\\)\"",
+          "name": "string.quoted.double.scala"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "match": "\\b(abstract|case\\s+(class|object)|class|def|extends|final|forSome|implicit|import|lazy|object|override|package|private|protected|sealed|trait|type|val|var|with)\\b",
+          "name": "keyword.scala"
+        },
+        {
+          "match": "\\b(case|catch|do|else|finally|for|if|macro|match|new|return|throw|try|while|yield)\\b",
+          "name": "keyword.control.scala"
+        },
+        {
+          "match": "(_|=>|=|<-|<:|<%|>:|#|@|⇒|←|:)",
+          "name": "keyword.operator.scala"
+        }
+      ]
+    },
+    "parentheses": {
+      "patterns": [
+        {
+          "begin": "\\(",
+          "end": "\\)",
+          "captures": {
+            "0": { "name": "delimiter.parentheses.scala" }
+          },
+          "patterns": [
+            { "include": "#code" }
+          ]
+        },
+        {
+          "begin": "\\[",
+          "end": "\\]",
+          "captures": {
+            "0": { "name": "delimiter.parentheses.scala" }
+          },
+          "patterns": [
+            { "include": "#typeExpr" }
+          ]
+        },
+        {
+          "begin": "\\{",
+          "end": "\\}",
+          "beginCaptures": { "0": { "name": "punctuation.section.begin" } },
+          "endCaptures": { "0": { "name": "punctuation.section.end" } },
+          "patterns": [
+            { "include": "#code" }
+          ]
+        }
+      ]
+    },
+    "delimiters": {
+      "patterns": [
+        {
+          "match": "[`\\.;,]",
+          "name": "delimiter.scala"
+        }
+      ]
+    },
+    "identifiers": {
+      "patterns": [
+        {
+          "match": "[\\p{Lu}_][\\p{L}0-9_]*((?<=_)[[\\p{Sm}\\p{So}[:print:]]&&[^\\s\\w\\)\\(\\]\\[{}`'\"\\.;,]]+)?",
+          "name": "entity.name.type.scala"
+        },
+        {
+          "match": "\\p{L}[\\p{L}0-9_]*((?<=_)[[\\p{Sm}\\p{So}[:print:]]&&[^\\s\\w\\)\\(\\]\\[{}`'\"\\.;,]]+)?",
+          "name": "entity.name.scala"
+        },
+        {
+          "match": "[[\\p{Sm}\\p{So}[:print:]]&&[^\\s\\w\\)\\(\\]\\[{}`'\"\\.;,]]+",
+          "name": "entity.name.operator.scala"
+        }
+      ]
+    },
+    "signatures": {
+      "patterns": [
+        {
+          "begin": "\\b(:)\\b\\s*([\\{\\(])?",
+          "end": "[$;=\\{\\(]\\}\\)",
+          "patterns": [
+            { "include": "typeExpr" }
+          ]
+        }
+      ]
+    },
+    "code": {
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#literals" },
+        { "include": "#declarations" },
+        { "include": "#keywords" },
+        { "include": "#parentheses" },
+        { "include": "#signatures" },
+        { "include": "#delimiters" },
+        { "include": "#identifiers" },
+        {
+          "match": ".",
+          "name": "invalid.scala"
+        }
+      ]
+    },
+    "scaladoc": {
+      "patterns": [
+        {
+          "begin": "(@param)\\s+(\\p{L}[\\p{L}0-9_]*((?<=_)[[\\p{Sm}\\p{So}[:print:]]&&[^\\s\\w\\)\\(\\]\\[{}`'\"\\.;,]]+)?)\\s+",
+          "end": "(?=^\\s*\\*\\s*$|^\\s*$|\\*\\/|@(?:param|return|constructor|see|note|example|usecase|author|version|since|todo)\\b)",
+          "beginCaptures": {
+            "1": { "name": "keyword.other.scaladoc" },
+            "2": { "name": "variable.parameter.scaladoc" }
+          },
+          "contentName": "comment.block.documentation.meta.description.scaladoc",
+          "patterns": [{ "include": "#scaladoc" }]
+        },
+        {
+          "begin": "(@(?:return|constructor|see|note|example|usecase|author|version|since|todo))\\b",
+          "end": "(?=^\\s*\\*\\s*$|^\\s*$|\\*\\/|@(?:param|return|constructor|see|note|example|usecase|author|version|since|todo)\\b)",
+          "beginCaptures": {
+            "1": { "name": "keyword.other.scaladoc" }
+          },
+          "contentName": "comment.block.documentation.meta.description.scaladoc",
+          "patterns": [{ "include": "#scaladoc" }]
+        },
+        {
+          "match": "'''((?!\\*\\/).)*'''",
+          "name": "scaladoc.markup.bold"
+        },
+        {
+          "match": "''((?!\\*\\/).)*''",
+          "name": "scaladoc.markup.italic"
+        },
+        {
+          "match": "__((?!\\*\\/).)*__",
+          "name": "scaladoc.markup.underline"
+        },
+        {
+          "begin": "`",
+          "end": "(`|(?=\\*\\/))",
+          "patterns": [
+            { "include": "#code" }
+          ]
+        },
+        {
+          "match": "\\^((?!\\*\\/).)*\\^",
+          "name": "scaladoc.markup.superscript"
+        },
+        {
+          "match": ",,((?!\\*\\/).)*,,",
+          "name": "scaladoc.markup.subscript"
+        },
+        {
+          "match": "\\[\\[((?!\\*\\/).)*\\]\\]",
+          "name": "scaladoc.markup.underline.link"
+        },
+        {
+          "begin": "\\{\\{\\{",
+          "end": "(\\}\\}\\}|(?=\\*\\/))",
+          "patterns": [
+            { "include": "#code" }
+          ]
+        },
+        {
+          "match": "^\\s*\\/?\\**\\s*((?<start>=+)([^=]((?!\\k<start>).)*)(\\k<start>))\\s*$",
+          "captures": {
+            "1": { "name": "scaladoc.markup.heading" }
+          }
+        }
+      ]
+    }
+  }
 }

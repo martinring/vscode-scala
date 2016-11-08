@@ -7,7 +7,6 @@ import akka.stream.{Materializer, OverflowStrategy}
 import akka.stream.scaladsl.{Sink, Source}
 import com.google.common.base.Charsets
 import com.google.common.io.Files
-import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMessages
 import io.circe.Json
 import net.flatmap.jsonrpc.{ErrorCodes, ResponseError}
 import net.flatmap.vscode.languageserver._
@@ -24,6 +23,8 @@ class ScalaServer(client: LanguageClient)(implicit ec: ExecutionContext, mat: Ma
   with TextDocuments
   with Configuration[Config] {
 
+  VSCodeLogger.instance.trySuccess(client)
+
   var maxNumberOfProblems = 100
 
   def initialize(processId: Option[Int],
@@ -31,6 +32,7 @@ class ScalaServer(client: LanguageClient)(implicit ec: ExecutionContext, mat: Ma
                  initializationOptions: Option[Json],
                  capabilities: ClientCapabilities,
                  trace: Option[Trace]): Future[InitializeResult] = {
+    new File(rootPath.getOrElse(".") + "/.ensime_cache").mkdir()
     val res = Try {
       EnsimeConfigProtocol.parse(Files.toString(new File(rootPath.getOrElse(".") + "/.ensime"), Charsets.UTF_8))
     }.map { implicit config =>
@@ -38,15 +40,19 @@ class ScalaServer(client: LanguageClient)(implicit ec: ExecutionContext, mat: Ma
       broadcaster ! Broadcaster.Register
       val msgs = Source.actorRef[EnsimeServerMessage](1024,OverflowStrategy.fail)
       val handler = Sink.foreach[EnsimeServerMessage] {
-        case msg => client.window.logMessage(MessageType.Log, msg.toString)
+        case FullTypeCheckCompleteEvent =>
+        case msg => client.window.logMessage(MessageType.Info, msg.toString)
       }
       val ref = msgs.to(handler).run()
       broadcaster.tell(Broadcaster.Register,ref)
       val project = system.actorOf(Project(broadcaster), "project")
+      Thread.sleep(1000)
       project.tell(ConnectionInfoReq,ref)
       textDocuments.runForeach {
         case (uri,src) =>
-          src.runForeach(validateTextDocument)
+          src.runForeach { doc =>
+            project ! TypecheckFileReq(SourceFileInfo(new File(uri), Some(doc.text)))
+          }
       }
       client.window.logMessage(MessageType.Log, "initialized ensime")
     }
@@ -91,9 +97,10 @@ class ScalaServer(client: LanguageClient)(implicit ec: ExecutionContext, mat: Ma
   }
 
   override def completionOptions: CompletionOptions =
-    CompletionOptions(resolveProvider = Some(true))
+    CompletionOptions(resolveProvider = true)
 
-  def completion(textDocument: TextDocumentIdentifier,
+  @net.flatmap.jsonrpc.JsonRPC.Named("textDocument/completion")
+  override def completion(textDocument: TextDocumentIdentifier,
                  position: Position): Future[CompletionList] = Future.successful {
     CompletionList(Seq(
       CompletionItem(
@@ -109,7 +116,7 @@ class ScalaServer(client: LanguageClient)(implicit ec: ExecutionContext, mat: Ma
     ))
   }
 
-  def resolveCompletionItem(item: CompletionItem): Future[CompletionItem] = Future.successful {
+  override def resolveCompletionItem(item: CompletionItem): Future[CompletionItem] = Future.successful {
     if (item.data == Some(Json.fromInt(1)))
       item.copy(
         detail = Some("TypeScript details"),

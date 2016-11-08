@@ -6,7 +6,7 @@
 
 import * as path from 'path';
 
-import { workspace, Disposable, ExtensionContext } from 'vscode';
+import { workspace, window, languages, Disposable, ExtensionContext, OnTypeFormattingEditProvider, TextDocument, Position,FormattingOptions, CancellationToken } from 'vscode';
 import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, TransportKind, Executable } from 'vscode-languageclient';
 
 export function activate(context: ExtensionContext) {
@@ -35,6 +35,15 @@ export function activate(context: ExtensionContext) {
 
 	// Create the language client and start the client.
 	let disposable = new LanguageClient('Language Server Example', serverOptions, clientOptions).start();
+
+	let formatter: OnTypeFormattingEditProvider = {
+		provideOnTypeFormattingEdits: (document: TextDocument, position: Position, ch: string, options: FormattingOptions, token: CancellationToken) => {
+			window.showInformationMessage(position.toString())
+			return []
+		}
+	}
+
+	languages.registerOnTypeFormattingEditProvider("scala",formatter,"}")
 
 	// Push the disposable to the context's subscriptions so that the
 	// client can be deactivated on extension deactivation
